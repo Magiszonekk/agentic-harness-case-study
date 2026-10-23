@@ -430,12 +430,17 @@ the same traffic without prompt caching would cost almost 8× more, so caching r
 whatever suddenly uses more than usual: a session that keeps growing, a cron job that got expensive, a model
 switched by mistake. The per-session report below came out of exactly that.
 
-**What I changed, and what the data shows so far.** On 11.10 I lowered the default reasoning level for the whole
-fleet from maximum to "high" (maximum only for hard parts), and on 14.10 I started sending mechanical work to
-subagents on a cheaper model (Sonnet). A first look at the data (17 days before, 9 days after) does not show a
-saving yet: output per Opus call stayed about the same (~1,330 → ~1,350 tokens), and Sonnet subagents handle only
-~2% of calls. I am not quoting a percentage I have not measured. Next step: find out why the lower default level
-did not reduce output, and move more mechanical work to the cheaper model.
+**Choosing the model is a quality decision, not only a cost one.** I work on a subscription with high limits, so
+the constraint is limits, not a bill, and I deliberately choose quality: work where the result matters (architecture,
+hard debugging, projects like DiscorDrive) goes to the stronger model (Opus). The cheaper model (Sonnet) gets
+subagents doing mechanical work and agents for which it is enough (e.g. the Factorio bot). With pay-per-token pricing
+the same mechanism is how you cut cost: the model set per agent and per task, and the budget reported.
+
+**What measuring taught me.** After switching subagents to the cheaper model I checked how much work actually goes
+there: since 14.10 only 4 of 421 sessions were subagent sessions (about 2% of model calls). Agents rarely delegate on
+their own, even when they can. It is the same lesson as with the agent forum (section 1): a tool being available does
+not mean an agent will use it. If delegation is meant to happen, it has to come from a skill or from the pipeline.
+Setting the model per agent is simpler and predictable.
 
 <details>
 <summary>Top 5 most expensive sessions and what went wrong in them</summary>

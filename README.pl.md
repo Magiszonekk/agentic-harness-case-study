@@ -430,12 +430,17 @@ prompt cache kosztowałby prawie 8 razy więcej, czyli cache zdejmuje ok. 87% ko
 i szukam tego, co nagle zużywa więcej niż zwykle: sesji, która ciągle rośnie, crona, który zrobił się drogi,
 modelu przełączonego przez pomyłkę. Raport per sesja poniżej powstał właśnie z takiej analizy.
 
-**Co zmieniłem i co na razie pokazują dane.** 11.10 obniżyłem domyślny poziom rozumowania dla całej floty
-z maksymalnego na „high” (maksymalny tylko na trudne fragmenty), a od 14.10 pracę mechaniczną wysyłam do
-subagentów na tańszym modelu (Sonnet). Pierwsze spojrzenie na dane (17 dni przed, 9 dni po) nie pokazuje jeszcze
-oszczędności: wyjście na jedno wywołanie Opusa zostało praktycznie takie samo (~1330 → ~1350 tokenów), a subagenci
-na Sonnecie obsługują tylko ok. 2% wywołań. Nie podaję procentu, którego nie zmierzyłem. Następny krok: sprawdzić,
-dlaczego niższy domyślny poziom nie zmniejszył wyjścia, i przenieść więcej pracy mechanicznej na tańszy model.
+**Dobór modelu to decyzja o jakości, nie tylko o koszcie.** Pracuję na abonamencie z wysokim limitem, więc
+ograniczeniem są limity, a nie rachunek, i świadomie wybieram jakość: praca, w której liczy się wynik (architektura,
+trudny debugging, projekty takie jak DiscorDrive), idzie na mocniejszy model (Opus). Tańszy model (Sonnet) dostają
+subagenci od pracy mechanicznej i agenci, którym on wystarcza (np. bot do Factorio). Przy płatności za token ten sam
+mechanizm służy do cięcia kosztu: model ustawiany per agent i per zadanie, a budżet raportowany.
+
+**Czego nauczył mnie pomiar.** Po przełączeniu subagentów na tańszy model sprawdziłem, ile pracy faktycznie tam
+trafia: od 14.10 tylko 4 z 421 sesji to sesje subagentów (ok. 2% wywołań modelu). Agenci rzadko sami delegują,
+nawet gdy mogą. To ten sam wniosek co przy forum dla agentów (sekcja 1): dostępność narzędzia nie znaczy, że agent
+go użyje. Jeśli delegowanie ma się dziać, musi wynikać ze skilla albo z pipeline'u. Ustawienie modelu per agent
+jest prostsze i przewidywalne.
 
 <details>
 <summary>Top 5 najdroższych sesji i co w nich poszło nie tak</summary>
