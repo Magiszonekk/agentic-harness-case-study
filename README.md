@@ -33,8 +33,7 @@ Below: how it is built, what I measure, three projects built by agents, and the 
 - **Cost measured per session, not just globally:** ~6.4B tokens in 26 days sounds like a lot, but ~97% of input
   is read from prompt cache — fresh tokens (uncached input, cache writes, output) are about 4% of the total. A typical DiscorDrive brief: ~70M tokens,
   of which ~1.4M fresh, ~220 model calls. A top-5 report of the most expensive sessions showed where tokens
-  actually go (long-lived sessions, not loops). At API list prices a typical brief
-  costs about $28, and caching cuts the cost almost 8×. → section 4
+  actually go (long-lived sessions, not loops). Prompt caching cuts the cost of the same traffic almost 8×. → section 4
 - **Gates and human in the loop:** approval before production, a decision inbox, evidence-based verification
   instead of the agent's say-so, independent testers. Measured: agents rated their own games 9/10, an independent
   judge 5–7/10. → sections 3, 5
@@ -422,19 +421,21 @@ The key finding: **tokens do not burn in loops, they burn in long-lived sessions
 over 200k tokens per call consumed 55% of all tokens (median across all sessions: 53k),
 and the 5 most expensive — 23%.
 
-**What it costs in money.** Privately I pay for a subscription (a fixed cost, limits instead of a bill), but
-I price the traffic as if I were paying for the API, because that is the number that makes sense in a company. At API list prices
-(Opus 5.5: $4 input, $20 output, $0.20 cache read, $5 cache write per 1M tokens):
-**a typical DiscorDrive brief costs about $28, range $10–75.** All Claude traffic in the Hermes databases
-(3.8B tokens, 26 days) comes to about $2k — without prompt caching the same traffic would cost about $15.7k,
-so caching cuts the cost almost 8×.
+**Why tokens, not dollars.** Privately I pay a subscription (a fixed cost, limits instead of a bill), and in a
+company the price per token depends on the contract and the model. So I report what converts to any price list:
+tokens, fresh tokens, model calls and the cache share. One ratio is worth quoting anyway: priced at API list rates,
+the same traffic without prompt caching would cost almost 8× more, so caching removes about 87% of the cost.
 
-**These averages describe the harness before optimisation, not today's.** For most of the measured period
-everything ran on a single model (Opus) at the highest reasoning level. In mid-October I lowered
-the default reasoning level for the whole fleet to "high" (maximum only for hard parts), and moved mechanical work
-to subagents on a cheaper model (Sonnet). This matters because output, including reasoning tokens, is about 40%
-of a typical brief's cost. I am not quoting the effect yet: too little time and too few briefs have passed since the change for a fair
-before/after comparison. It is the natural first measurement to make: the same kinds of briefs, cost and iteration count before and after.
+**How I watch it day to day.** I check daily usage and cost on a dashboard built on the proxy data and look for
+whatever suddenly uses more than usual: a session that keeps growing, a cron job that got expensive, a model
+switched by mistake. The per-session report below came out of exactly that.
+
+**What I changed, and what the data shows so far.** On 11.10 I lowered the default reasoning level for the whole
+fleet from maximum to "high" (maximum only for hard parts), and on 14.10 I started sending mechanical work to
+subagents on a cheaper model (Sonnet). A first look at the data (17 days before, 9 days after) does not show a
+saving yet: output per Opus call stayed about the same (~1,330 → ~1,350 tokens), and Sonnet subagents handle only
+~2% of calls. I am not quoting a percentage I have not measured. Next step: find out why the lower default level
+did not reduce output, and move more mechanical work to the cheaper model.
 
 <details>
 <summary>Top 5 most expensive sessions and what went wrong in them</summary>

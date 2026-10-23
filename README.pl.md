@@ -33,8 +33,7 @@ Poniżej: jak to jest zbudowane, co mierzę, trzy projekty, które zbudowali age
 - **Koszt mierzony per sesja, nie tylko globalnie:** ~6,4 mld tokenów w 26 dni brzmi dużo, ale ~97% wejścia
   to odczyt z prompt cache — nowych tokenów (wejście bez cache, zapis do cache, wyjście) jest ok. 4% całości. Typowe zlecenie w DiscorDrive: ~70 mln tokenów,
   z czego ~1,4 mln nowych, ~220 wywołań modelu. Raport top 5 najdroższych sesji pokazał, gdzie realnie
-  idą tokeny (długo żyjące sesje, nie pętle). Po cenniku API typowe zlecenie
-  to ok. $28 (~100 zł), a cache obniża koszt prawie 8-krotnie. → sekcja 4
+  idą tokeny (długo żyjące sesje, nie pętle). Prompt cache obniża koszt tego samego ruchu prawie 8-krotnie. → sekcja 4
 - **Bramki i człowiek w pętli:** zgoda przed produkcją, inbox decyzji, weryfikacja oparta na dowodach
   zamiast deklaracji agenta, niezależni testerzy. Zmierzone: agenci oceniali swoje gry na 9/10, niezależny
   sędzia na 5–7/10. → sekcje 3, 5
@@ -422,19 +421,21 @@ Najważniejszy wniosek: **tokeny nie palą się w pętlach, tylko w długo żyj�
 ponad 200 tys. tokenów na wywołanie zjadło 55% wszystkich tokenów (mediana dla wszystkich sesji: 53 tys.),
 a 5 najdroższych — 23%.
 
-**Ile to kosztuje w pieniądzach.** Prywatnie płacę abonament (stały koszt, limity zamiast rachunku), ale
-wyceniam ruch tak, jakbym płacił za API, bo to jest liczba, która ma sens w firmie. Po cenniku API
-(Opus 5.5: $4 wejście, $20 wyjście, $0,20 odczyt z cache, $5 zapis do cache na 1M tokenów):
-**typowe zlecenie DiscorDrive to ok. $28 (ok. 100 zł), rozrzut $10–75.** Cały ruch Claude z baz Hermesa
-(3,8 mld tokenów, 26 dni) to ok. $2 tys. — bez prompt cache ten sam ruch kosztowałby ok. $15,7 tys.,
-czyli cache obniża koszt prawie 8-krotnie.
+**Dlaczego tokeny, a nie dolary.** Prywatnie płacę abonament (stały koszt, limity zamiast rachunku), a w firmie
+cena za token zależy od umowy i modelu. Dlatego podaję to, co da się przeliczyć na każdy cennik: tokeny, nowe
+tokeny, wywołania modelu i udział cache. Jeden współczynnik warto jednak podać: po cenniku API ten sam ruch bez
+prompt cache kosztowałby prawie 8 razy więcej, czyli cache zdejmuje ok. 87% kosztu.
 
-**Te średnie opisują harness sprzed optymalizacji, nie dzisiejszy.** Przez większość mierzonego okresu
-wszystko szło na jednym modelu (Opus) z najwyższym poziomem rozumowania. W połowie października obniżyłem
-domyślny poziom rozumowania dla całej floty do „high” (maksymalny tylko na trudne fragmenty), a pracę mechaniczną
-przeniosłem na subagentów na tańszym modelu (Sonnet). Ma to znaczenie, bo wyjście, w tym tokeny rozumowania, to ok. 40%
-kosztu typowego zlecenia. Efektu jeszcze nie podaję: od zmiany minęło za mało czasu i zleceń, żeby porównanie
-przed/po było uczciwe. To naturalny pierwszy pomiar do zrobienia: te same typy zleceń, koszt i liczba iteracji przed i po.
+**Jak pilnuję tego na co dzień.** Codziennie sprawdzam zużycie i koszt na dashboardzie zbudowanym na danych z proxy
+i szukam tego, co nagle zużywa więcej niż zwykle: sesji, która ciągle rośnie, crona, który zrobił się drogi,
+modelu przełączonego przez pomyłkę. Raport per sesja poniżej powstał właśnie z takiej analizy.
+
+**Co zmieniłem i co na razie pokazują dane.** 11.10 obniżyłem domyślny poziom rozumowania dla całej floty
+z maksymalnego na „high” (maksymalny tylko na trudne fragmenty), a od 14.10 pracę mechaniczną wysyłam do
+subagentów na tańszym modelu (Sonnet). Pierwsze spojrzenie na dane (17 dni przed, 9 dni po) nie pokazuje jeszcze
+oszczędności: wyjście na jedno wywołanie Opusa zostało praktycznie takie samo (~1330 → ~1350 tokenów), a subagenci
+na Sonnecie obsługują tylko ok. 2% wywołań. Nie podaję procentu, którego nie zmierzyłem. Następny krok: sprawdzić,
+dlaczego niższy domyślny poziom nie zmniejszył wyjścia, i przenieść więcej pracy mechanicznej na tańszy model.
 
 <details>
 <summary>Top 5 najdroższych sesji i co w nich poszło nie tak</summary>
