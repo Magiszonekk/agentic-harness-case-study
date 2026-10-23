@@ -467,7 +467,7 @@ i pytanie do człowieka.</li>
 a i tak ~440 tys. tokenów na wywołanie — kontekst urósł od wyników komend (logi, testy, pliki). Tu pomaga
 przycinanie wyników konkretnych, gadatliwych komend, a nie ogólna kompresja.</li>
 </ul>
-<p>Raport generuje skrypt (<a href="tools/raport_sesji.py"><code>tools/raport_sesji.py</code></a>, <a href="raport-sesji.md">wynik</a>, ok. 75 linii, tylko odczyt baz). Pułapka, na którą
+<p>Raport generuje skrypt (<a href="tools/session_report.py"><code>tools/session_report.py</code></a>, <a href="session-report.md">wynik</a>, ok. 75 linii, tylko odczyt baz). Pułapka, na którą
 trafiłem przy pierwszej wersji: po kompakcji kontekstu framework trzyma w bazie kopie starych wiadomości, więc
 liczenie wierszy zawyżało powtórzenia ponad stukrotnie (497 zamiast 4). Liczę unikalne identyfikatory wywołań —
 ta sama zasada co przy cache: zanim zaufam metryce, sprawdzam, co dokładnie zlicza.</p>

@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""Raport kosztu per sesja z baz Hermesa (read-only).
+"""Per-session cost report from the Hermes databases (read-only).
 
-Czyta ~/.hermes/state.db i ~/.hermes/profiles/*/state.db, liczy tokeny i wywołania
-per sesja, pokazuje top N najdroższych z sygnałami „palenia” (długi kontekst na
-wywołanie, czas życia sesji, identyczne powtórzone wywołania narzędzi).
+Reads ~/.hermes/state.db and ~/.hermes/profiles/*/state.db, counts tokens and model
+calls per session and lists the top N most expensive sessions with "burn" signals
+(long context per call, session lifetime, identical repeated tool calls).
 
-Użycie: python3 raport_sesji.py [--od 2026-09-25] [--top 5] > raport.md
+Usage: python3 session_report.py [--since 2026-09-25] [--until 2026-10-20] [--top 5] > session-report.md
 """
 import argparse, collections, glob, hashlib, json, os, sqlite3, statistics, time
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--od", default="2026-09-25")
+ap.add_argument("--since", default="2026-09-25")
+ap.add_argument("--until", default=None, help="exclusive end date of session start (default: now)")
 ap.add_argument("--top", type=int, default=5)
 ap.add_argument("--hermes", default=os.path.expanduser("~/.hermes"))
 a = ap.parse_args()
-t0 = time.mktime(time.strptime(a.od, "%Y-%m-%d"))
+t0 = time.mktime(time.strptime(a.since, "%Y-%m-%d"))
+t1 = time.mktime(time.strptime(a.until, "%Y-%m-%d")) if a.until else time.time()
 
 def ro(path):
     return sqlite3.connect(f"file:{path}?mode=ro", uri=True)
@@ -27,14 +29,14 @@ for db in dbs:
     for r in c.execute(
         """select id, source, started_at, coalesce(last_activity_at, ended_at, started_at), api_call_count,
                   input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, title
-           from sessions where started_at >= ? and api_call_count > 0""", (t0,)):
+           from sessions where started_at >= ? and started_at < ? and api_call_count > 0""", (t0, t1)):
         sid, src, st, last, calls, inp, out, cr, cw, title = r
         tok = (inp or 0) + (out or 0) + (cr or 0) + (cw or 0)
         rows.append(dict(db=db, prof=prof, id=sid, src=src, h=(last - st) / 3600, calls=calls,
                          tok=tok, fresh=(inp or 0) + (out or 0) + (cw or 0), title=(title or "")[:70]))
 
-# Po kompakcji kontekstu Hermes trzyma w bazie kopie starych wiadomości (to samo message_uid
-# i to samo id wywołania narzędzia w kilku wierszach) — liczymy unikalne, nie wiersze.
+# After context compaction Hermes keeps copies of old messages in the database (the same
+# message_uid and the same tool-call id in several rows), so count unique ids, not rows.
 def user_msgs(db, sid):
     return ro(db).execute("select count(distinct coalesce(message_uid, id)) from messages "
                           "where session_id=? and role='user'", (sid,)).fetchone()[0]
@@ -58,15 +60,16 @@ per_call = [r["tok"] / r["calls"] for r in rows]
 heavy = [r for r in rows if r["tok"] / r["calls"] > 200e3]
 top = sorted(rows, key=lambda r: -r["tok"])[: a.top]
 
-print(f"# Raport kosztu per sesja (od {a.od})\n")
-print(f"- sesje z użyciem modelu: {len(rows)}, tokeny: {total/1e9:.2f} mld, "
-      f"nowe (bez odczytu z cache): {100*sum(r['fresh'] for r in rows)/total:.1f}%")
-print(f"- mediana tokenów na wywołanie: {statistics.median(per_call)/1e3:.0f} tys.")
-print(f"- top {a.top} sesji: {100*sum(r['tok'] for r in top)/total:.0f}% wszystkich tokenów")
-print(f"- sesje ze średnio >200 tys. tokenów na wywołanie: {len(heavy)}, "
-      f"{100*sum(r['tok'] for r in heavy)/total:.0f}% wszystkich tokenów\n")
-print("| profil | źródło | tokeny | wywołania | tys. tok./wywołanie | czas życia | wiadomości usera | powtórzone identyczne wywołania narzędzi | tytuł |")
+period = f"{a.since} to {a.until}" if a.until else f"since {a.since}"
+print(f"# Per-session cost report ({period})\n")
+print(f"- sessions that used a model: {len(rows)}, tokens: {total/1e9:.2f}B, "
+      f"fresh (not read from cache): {100*sum(r['fresh'] for r in rows)/total:.1f}%")
+print(f"- median tokens per call: {statistics.median(per_call)/1e3:.0f}k")
+print(f"- top {a.top} sessions: {100*sum(r['tok'] for r in top)/total:.0f}% of all tokens")
+print(f"- sessions averaging >200k tokens per call: {len(heavy)}, "
+      f"{100*sum(r['tok'] for r in heavy)/total:.0f}% of all tokens\n")
+print("| profile | source | tokens | calls | k tokens / call | lifetime | user messages | repeated identical tool calls | title |")
 print("|---|---|---|---|---|---|---|---|---|")
 for r in top:
-    print(f"| {r['prof']} | {r['src']} | {r['tok']/1e6:.0f} mln | {r['calls']} | {r['tok']/r['calls']/1e3:.0f} | "
+    print(f"| {r['prof']} | {r['src']} | {r['tok']/1e6:.0f}M | {r['calls']} | {r['tok']/r['calls']/1e3:.0f} | "
           f"{r['h']:.0f} h | {user_msgs(r['db'], r['id'])} | {repeats(r['db'], r['id'])} | {r['title']} |")
