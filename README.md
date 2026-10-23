@@ -13,6 +13,19 @@ Below: how it is built, what I measure, three projects built by agents, and the 
 
 > Every topic has a short description, with details in collapsible blocks (▸). You can read the whole thing without expanding anything.
 
+**What to read, depending on what you are looking for**
+
+| Topic | Where |
+|---|---|
+| Building software with agents: orchestration, delegation, planning | sections 1, 2, 5, 8 |
+| Verifying agent output, gates, human in the loop | section 3, games in section 5 |
+| Agent tools and MCP, tools at the right level of abstraction | section 1a, case 2 |
+| Multi-agent systems and when they do not pay off | section 1, case 1 |
+| Safety: prompt injection, isolation, autonomy as a risk decision | section 1c, cases 3 and 4 |
+| Cost: tokens, caching, choosing the model per task | section 4 |
+| Evaluating models: a benchmark with a control group, 6 models, 264 runs | case 4 |
+| Working in a stack I did not know | section 5 (Kotlin) |
+
 ## TL;DR
 
 - **My own harness, used daily:** 23 specialist agents running 24/7 on a server, and an orchestrator that delegates
@@ -34,7 +47,7 @@ Below: how it is built, what I measure, three projects built by agents, and the 
   a prompt-injection benchmark (resisting ≠ detecting). → section 6
 - **Approach:** autonomy is a risk decision. At home I allow a lot; in a company I would put a
   reviewer + concept guard before every PR and narrower permissions. I name weak spots openly
-  (interfaces to the fleet, per-task budgets, PHP). → sections 1b, 1c, 7, 8
+  (interfaces to the fleet, per-task budgets). → sections 1b, 1c, 7, 8
 
 ---
 
@@ -233,11 +246,11 @@ in the repo, in git, reviewed like code.
   orchestrator ── splits into tasks, picks model, reasoning and budget PER TASK
         │
         ▼
-  specialist agents (PHP backend, frontend, tests, migrations …)
+  specialist agents (backend, frontend, tests, migrations …)
         │  each: own skills, own tools (custom MCP), own pipeline,
         │  branch/worktree, permissions limited to its own area
         ▼
-  automated gates: tests, static analysis (phpstan/psalm), lint, CI
+  automated gates: tests, type checks and static analysis, lint, CI
         │
         ▼
   ┌─────────────────────────┬─────────────────────────────┐
@@ -563,9 +576,7 @@ see below)</li>
 <br>
 
 Takeaway: in an unfamiliar technology I do not judge code style, I design contracts and tests that
-tell me whether the result is correct. The same goes for PHP. I know it at a basic level: I understand my own modules
-in the print-house system and can explain them, while debugging third-party libraries takes me longer.
-But I learn fast and work even in languages I had never seen before — Kotlin above is
+tell me whether the result is correct. I learn fast and work even in languages I had never seen before — Kotlin above is
 an example. What makes this possible is language-independent fundamentals: I was writing code before
 AI tools existed, so I know application architecture, patterns and how the tooling works (databases, networking, builds,
 tests). Syntax and frameworks are something to catch up on, not a barrier.
@@ -752,7 +763,7 @@ at my volume they would not pay off. In a team and on a company's production sys
 
 1. **Reconnaissance and concept** — an agent maps the repo: architecture, conventions, how to run the app and the tests;
    the result + a conversation with the team about vision and decisions → a `koncept.md` that every later agent receives.
-2. **Gate assessment** — what can be checked automatically (tests, phpstan/psalm, lint), what is missing,
+2. **Gate assessment** — what can be checked automatically (tests, type checks, static analysis, lint), what is missing,
    where a second agent is needed, where a human.
 3. **A spec with acceptance criteria** — written with an agent, approved by me.
 4. **Splitting into small tasks** — each with a chosen model, a budget and its own branch/worktree.

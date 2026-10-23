@@ -13,6 +13,19 @@ Poniżej: jak to jest zbudowane, co mierzę, trzy projekty, które zbudowali age
 
 > Każdy temat ma krótki opis, a szczegóły są w rozwijanych blokach (▸). Da się przeczytać całość bez rozwijania.
 
+**Co czytać, zależnie od tego, czego szukasz**
+
+| Temat | Gdzie |
+|---|---|
+| Tworzenie oprogramowania z agentami: orkiestracja, delegowanie, planowanie | sekcje 1, 2, 5, 8 |
+| Weryfikacja pracy agentów, bramki, człowiek w pętli | sekcja 3, gry w sekcji 5 |
+| Narzędzia agentów i MCP, narzędzia na właściwym poziomie abstrakcji | sekcja 1a, przypadek 2 |
+| Systemy wieloagentowe i kiedy się nie opłacają | sekcja 1, przypadek 1 |
+| Bezpieczeństwo: prompt injection, izolacja, autonomia jako decyzja o ryzyku | sekcja 1c, przypadki 3 i 4 |
+| Koszty: tokeny, cache, dobór modelu do zadania | sekcja 4 |
+| Ocena modeli: benchmark z grupą kontrolną, 6 modeli, 264 przebiegi | przypadek 4 |
+| Praca w stacku, którego nie znałem | sekcja 5 (Kotlin) |
+
 ## TL;DR
 
 - **Własny harness na co dzień:** 23 agentów-specjalistów na serwerze 24/7, orkiestrator, który deleguje
@@ -34,7 +47,7 @@ Poniżej: jak to jest zbudowane, co mierzę, trzy projekty, które zbudowali age
   benchmark prompt injection (odporność ≠ wykrycie). → sekcja 6
 - **Podejście:** autonomia to decyzja o ryzyku. U siebie pozwalam na dużo, w firmie zbudowałbym
   reviewer + concept guard przed każdym PR i węższe uprawnienia. Słabe strony nazywam wprost
-  (interfejsy do floty, budżety per zadanie, PHP). → sekcje 1b, 1c, 7, 8
+  (interfejsy do floty, budżety per zadanie). → sekcje 1b, 1c, 7, 8
 
 ---
 
@@ -233,11 +246,11 @@ w repo, w gicie, z review jak kod.
   orkiestrator ── dzieli na zadania, dobiera model, reasoning i budżet PER ZADANIE
         │
         ▼
-  agenci-specjaliści (backend PHP, frontend, testy, migracje …)
+  agenci-specjaliści (backend, frontend, testy, migracje …)
         │  każdy: własne skille, własne narzędzia (custom MCP), własny pipeline,
         │  gałąź/worktree, uprawnienia tylko do swojego obszaru
         ▼
-  bramki automatyczne: testy, analiza statyczna (phpstan/psalm), lint, CI
+  bramki automatyczne: testy, typy i analiza statyczna, lint, CI
         │
         ▼
   ┌─────────────────────────┬─────────────────────────────┐
@@ -563,9 +576,7 @@ patrz niżej)</li>
 <br>
 
 Wniosek: w nieznanej technologii nie oceniam stylu kodu, tylko projektuję kontrakty i testy, które
-mówią, czy wynik jest poprawny. To samo dotyczy PHP. Znam go na poziomie podstawowym: swoje moduły
-w systemie drukarni rozumiem i umiem wytłumaczyć, a debugowanie cudzych bibliotek idzie mi wolniej.
-Szybko się jednak uczę i pracuję nawet w językach, których wcześniej nie widziałem — Kotlin powyżej jest
+mówią, czy wynik jest poprawny. Szybko się uczę i pracuję nawet w językach, których wcześniej nie widziałem — Kotlin powyżej jest
 tego przykładem. Pozwalają mi na to podstawy niezależne od języka: pisałem kod, zanim pojawiły się
 narzędzia AI, więc znam architekturę aplikacji, wzorce i to, jak działają narzędzia (bazy, sieć, build,
 testy). Składnia i framework są dla mnie do nadrobienia, a nie barierą.
@@ -752,7 +763,7 @@ przy moim wolumenie nie zwrócą się. W zespole i na produkcji firmy dodałbym:
 
 1. **Rozpoznanie i koncept** — agent mapuje repo: architektura, konwencje, jak uruchomić aplikację i testy;
    wynik + rozmowa z zespołem o wizji i decyzjach → `koncept.md`, który dostaje każdy kolejny agent.
-2. **Ocena bramek** — co da się sprawdzić automatycznie (testy, phpstan/psalm, lint), czego brakuje,
+2. **Ocena bramek** — co da się sprawdzić automatycznie (testy, typy, analiza statyczna, lint), czego brakuje,
    gdzie potrzebny drugi agent, gdzie człowiek.
 3. **Specyfikacja z kryteriami akceptacji** — razem z agentem, zatwierdzona przeze mnie.
 4. **Podział na małe zadania** — każde z dobranym modelem, budżetem i własną gałęzią/worktree.
